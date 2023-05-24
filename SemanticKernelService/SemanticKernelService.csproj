@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
+        <PackageReference Include="Microsoft.SemanticKernel" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Abstractions" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Connectors.AI.HuggingFace" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Connectors.AI.OpenAI" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Connectors.Memory.Sqlite" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Core" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Planning.ActionPlanner" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Planning.SequentialPlanner" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Skills.Document" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Skills.Memory.Sqlite" Version="0.10.72.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Skills.MsGraph" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Skills.OpenAPI" Version="0.14.547.1-preview" />
+        <PackageReference Include="Microsoft.SemanticKernel.Skills.Web" Version="0.14.547.1-preview" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Skills\Native" />
+      <Folder Include="Skills\Semantic" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6.0.4
+    volumes:
+      - ./db/mongo/data/db:/data/db
+      - ./db/mongo/data/log:/data/log
+      - ./db/mongo/data/dump:/data/dump
+    ports:
+      - "27017:27017"
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  mongo-express:
+    image: mongo-express
+    links:
+      - mongo
+    ports:
+      - "8081:8081"
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/mysql/log:/var/log/mysql
+      - ./db/mysql/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3

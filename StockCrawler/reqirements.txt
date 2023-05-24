@@ -1,0 +1,6 @@
+beautifulsoup4
+fire
+pyyaml
+pymongo
+pymysql
+tushare

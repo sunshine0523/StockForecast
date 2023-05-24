@@ -1,0 +1,18 @@
+mongo:
+  host: 'localhost'
+  port: 27017
+
+mysql:
+  host: 'localhost'
+  user: 'YOUR USER'
+  passwd: 'YOUR PASSWORD'
+  port: 3306
+
+stock_info_crawler:
+  ts_token: 'YOUR TOSHARE TOKEN'
+  db_name: 'stock'
+  collection_name: 'stock_info'
+
+stock_news_crawler:
+  db_name: 'stock'
+  table_name: 'stock_news'

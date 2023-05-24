@@ -1,0 +1,5 @@
+/db/
+/StockCrawler/config.yaml
+/SemanticKernelService/appsettings.json
+/SemanticKernelService/obj/
+/SemanticKernelService/bin/

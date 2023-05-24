@@ -1,0 +1,14 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "JWTTokenOptions": {
+    "Audience": "YOUR AUDIENCE",
+    "Issuer": "YOUR ISSUER",
+    "SecurityKey": "YOUR JWT KEY"
+  }
+}
