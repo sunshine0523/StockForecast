@@ -26,11 +26,11 @@ public class SkService : ISkService
         {
             contextVariables = new ContextVariables();
         }
-
+        
         var result = await kernel.RunAsync(contextVariables, skFunction);
         if (result.ErrorOccurred)
         {
-            throw new Exception(result.Result);
+            throw new Exception("SK ErrorOccurred");
         }
 
         return new AskResult

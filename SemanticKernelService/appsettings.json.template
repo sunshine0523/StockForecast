@@ -10,5 +10,9 @@
     "Audience": "YOUR AUDIENCE",
     "Issuer": "YOUR ISSUER",
     "SecurityKey": "YOUR JWT KEY"
+  },
+  "ConnectionStrings": {
+    "MySQLStockConnection": "server=localhost;port=3306;uid=<YOUR UID>;pwd=<YOUR PWD>;database=stock"
+    "MongoStockConnection": "ConnectionString=mongodb://localhost:27017;DatabaseName=stock"
   }
 }

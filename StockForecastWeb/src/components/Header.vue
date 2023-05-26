@@ -3,24 +3,59 @@
     router
     :default-active=activeIndex
     mode="horizontal"
-    @select="handleSelect"
     :ellipsis="false"
   >
-    <a href="/" class="title">大模型股票预测</a>
-    <el-menu-item index="test1">首页</el-menu-item>
-    <el-menu-item index="test">测试</el-menu-item>
+    <el-link href="/" class="title" type="primary" :underline="false">大模型股票预测</el-link>
+    <el-menu-item index="stockNews">行情</el-menu-item>
+    <el-menu-item index="analysis">分析</el-menu-item>
+    <el-menu-item index="forecast">预测</el-menu-item>
     <div class="flex-grow"/>
-    <el-menu-item index="login">登录</el-menu-item>
+    <el-menu-item @click="toLogin">{{loginUser}}</el-menu-item>
   </el-menu>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from "axios";
+import baseUrls from "@/config/baseUrlConfig";
+import {ElMessage, ElMessageBox} from "element-plus";
+import {useRouter} from "vue-router";
+
+onMounted(()=>{
+  validLogin()
+})
+
+const router = useRouter()
 
 const activeIndex = ref('index')
 
-const handleSelect = (key: string, keyPath: string[]) => {
-  console.log(key, keyPath)
+const loginUser = ref('登录')
+
+const validLogin = () => {
+  const token = localStorage.getItem('token')
+  axios.get(`${baseUrls.semantic_kernel_service}/Authentication/valid`, {
+    headers: {'Authorization': `Bearer ${token}`}
+  }).then((response) => {
+    loginUser.value = response.data
+    sessionStorage.setItem('isLogin', '1')
+  }).catch((e) => {
+    ElMessage('请先登录 ' + e)
+    sessionStorage.setItem('isLogin', '0')
+  })
+}
+
+const toLogin = () => {
+  const isLogin = sessionStorage.getItem('isLogin') == '1'
+  if(isLogin) {
+    ElMessageBox.confirm('要退出登录吗？')
+      .then(()=>{
+        loginUser.value = '登录'
+        sessionStorage.setItem('isLogin', '0')
+        localStorage.removeItem('token')
+      })
+  } else {
+    router.push('/login')
+  }
 }
 </script>
 

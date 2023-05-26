@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using SemanticKernelService.Model;
 using SemanticKernelService.Services;
@@ -9,6 +10,7 @@ namespace SemanticKernelService.Controllers;
 
 [ApiController]
 [Route("[controller]")]
+[EnableCors("MyPolicy")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class SemanticKernelController : ControllerBase
 {
@@ -21,7 +23,7 @@ public class SemanticKernelController : ControllerBase
         _skService = new SkService();
     }
 
-    [HttpPost(Name = "skills/{skillName}/invoke/{functionName}")]
+    [HttpPost("skills/{skillName}/invoke/{functionName}")]
     public async Task<ActionResult<AskResult>> InvokeFunctionAsync(string skillName, string functionName, Ask? ask)
     {
         try

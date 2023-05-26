@@ -5,7 +5,11 @@ using Microsoft.SemanticKernel.Skills.Document.FileSystem;
 using Microsoft.SemanticKernel.Skills.Document.OpenXml;
 using Microsoft.SemanticKernel.Skills.Web;
 using Microsoft.SemanticKernel.TemplateEngine;
+using MongoDB.Bson;
+using SemanticKernelService.Database;
 using SemanticKernelService.Model;
+using SemanticKernelService.Skills.Native.Stock;
+using SemanticKernelService.Skills.Native.StockDb;
 
 namespace SemanticKernelService.Utils;
 
@@ -13,11 +17,12 @@ internal static class SemanticKernelFactory
 {
     internal static IKernel CreateKernel(
         OpenAiConfig param,
+        string mysqlConnectionString,
         ILogger logger)
     {
         KernelBuilder builder = Kernel.Builder;
         builder = _ConfigureKernelBuilder(param, builder);
-        return _CompleteKernelSetup(builder, logger);
+        return _CompleteKernelSetup(builder, mysqlConnectionString, logger);
     }
 
     private static KernelBuilder _ConfigureKernelBuilder(OpenAiConfig param, KernelBuilder builder)
@@ -44,25 +49,29 @@ internal static class SemanticKernelFactory
         });
     }
 
-    private static IKernel _CompleteKernelSetup(KernelBuilder builder, ILogger logger)
+    private static IKernel _CompleteKernelSetup(KernelBuilder builder, string mysqlConnectionString, ILogger logger)
     {
         IKernel kernel = builder.Build();
         kernel.RegisterSemanticSkills(Directory.GetCurrentDirectory() + "\\Skills\\Semantic", logger);
-        kernel.RegisterNativeSkills();
+        kernel.RegisterNativeSkills(mysqlConnectionString);
 
         return kernel;
     }
 
-    private static void RegisterNativeSkills(this IKernel kernel)
+    private static void RegisterNativeSkills(this IKernel kernel, string mysqlConnectionString)
     {
-        DocumentSkill documentSkill = new(new WordDocumentConnector(), new LocalFileSystemConnector());
-        kernel.ImportSkill(documentSkill, nameof(DocumentSkill));
+        // DocumentSkill documentSkill = new(new WordDocumentConnector(), new LocalFileSystemConnector());
+        // kernel.ImportSkill(documentSkill, nameof(DocumentSkill));
+        //
+        // ConversationSummarySkill conversationSummarySkill = new(kernel);
+        // kernel.ImportSkill(conversationSummarySkill, nameof(ConversationSummarySkill));
+        //
+        // var webFileDownloadSkill = new WebFileDownloadSkill();
+        // kernel.ImportSkill(webFileDownloadSkill, nameof(WebFileDownloadSkill));
 
-        ConversationSummarySkill conversationSummarySkill = new(kernel);
-        kernel.ImportSkill(conversationSummarySkill, nameof(ConversationSummarySkill));
-
-        var webFileDownloadSkill = new WebFileDownloadSkill();
-        kernel.ImportSkill(webFileDownloadSkill, nameof(WebFileDownloadSkill));
+        StockDbSkill stockDbSkill = new(kernel, mysqlConnectionString, null);
+        StockSkill stockSkill = new(kernel, stockDbSkill, null);
+        kernel.ImportSkill(stockSkill, nameof(StockSkill));
     }
 
     private static void RegisterSemanticSkills(

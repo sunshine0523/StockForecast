@@ -151,3 +151,9 @@ npm install axios --save
 ```shell
 npm install socket.io-client --save
 ```
+
+- echarts
+
+```shell
+npm install echarts --save
+```

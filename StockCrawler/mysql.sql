@@ -8,4 +8,7 @@ create table stock_news (
     news_title VARCHAR(200),
     news_content VARCHAR(5000),
     news_link VARCHAR(200)
-)
+);
+
+create index stock_news_stock_code_index
+    on stock.stock_news (stock_code);

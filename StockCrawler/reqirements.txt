@@ -1,6 +1,8 @@
 beautifulsoup4
+fastapi
 fire
 pyyaml
 pymongo
 pymysql
 tushare
+uvicorn

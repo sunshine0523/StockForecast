@@ -28,15 +28,18 @@ def crawler_sina(
     base_url = 'https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllNewsStock.php'
 
     # 获取数据库中新闻时间最新一条数据，用以比对时间
-    mysql_connector.execute_sql('''
-        select time_scamp from stock_news
+    mysql_connector.execute_sql(f'''
+        select time_scamp from {table_name}
+        where stock_code='{stock_code}'
         order by time_scamp desc
         limit 1
     ''')
-    mysql_connector.db.commit()
-    last_time_scamp = mysql_connector.cursor.fetchone()[0]
+    mysql_connector.commit()
+    last_time_scamp = mysql_connector.cursor.fetchone()
     if last_time_scamp is None:
         last_time_scamp = -1
+    else:
+        last_time_scamp = last_time_scamp['time_scamp']
     try:
         for page in range(page_count):
             res = requests.get(f'{base_url}?symbol={sina_stock_code}&Page={page + 1}')
@@ -57,9 +60,9 @@ def crawler_sina(
                         mysql_connector.close()
                         return
                     mysql_connector.execute_sql(f'''
-                        insert into stock_news(
+                        insert into {table_name}(
                             stock_code, time_scamp, news_title, news_content, news_link
-                        ) values 
+                        ) values
                         ('{stock_code}', {time_stamp}, '{news_title}', '', '{link}')
                     ''')
                     mysql_connector.db.commit()

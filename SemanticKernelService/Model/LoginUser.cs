@@ -5,5 +5,5 @@ namespace SemanticKernelService.Model;
 
 internal static class LoginUser
 {
-    internal static Hashtable LoginUserList { get; } = new();
+    internal static Dictionary<string, IKernel> LoginUserList { get; } = new();
 }

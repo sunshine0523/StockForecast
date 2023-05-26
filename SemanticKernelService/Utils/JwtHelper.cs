@@ -17,13 +17,14 @@ public class JwtHelper
         _jwtTokenOptions = jwtTokenOptions;
     }
 
-    public string CreateToken()
+    public string CreateToken(OpenAiConfig openAiConfig)
     {
         var claims = new[]
         {
             new Claim(ClaimTypes.Name, "u_admin"),
             new Claim(ClaimTypes.Role, "r_admin"),
-            new Claim(JwtRegisteredClaimNames.Jti, "admin")
+            new Claim(JwtRegisteredClaimNames.Jti, "admin"),
+            new Claim("Deployment", openAiConfig.DeploymentOrModel)
         };
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtTokenOptions.SecurityKey));
         var algorithm = SecurityAlgorithms.HmacSha256;
@@ -33,7 +34,7 @@ public class JwtHelper
             _jwtTokenOptions.Audience,
             claims,
             DateTime.Now,
-            DateTime.Now.AddSeconds(30),
+            DateTime.Now.AddDays(1),
             signingCredentials);
         return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
     }

@@ -23,7 +23,10 @@ class MySQLConnector(object):
             port=self.config['mysql']['port'],
             database=db_name
         )
-        self.cursor = self.db.cursor()
+        self.cursor = self.db.cursor(cursor=pymysql.cursors.DictCursor)
+
+    def commit(self):
+        self.db.commit()
 
     def execute_sql(self, sql: str):
         try:
@@ -58,6 +61,9 @@ class MongoConnector(object):
             return self.collection.find().skip((cur - 1) * per).limit(per)
         else:
             return self.collection.find(filter=m_filter).skip((cur - 1) * per).limit(per)
+
+    def find_by_filter(self, m_filter):
+        return self.collection.find(filter=m_filter)
 
     def dis_connect(self):
         self.client.close()
