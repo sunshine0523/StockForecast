@@ -53,12 +53,12 @@ internal static class SemanticKernelFactory
     {
         IKernel kernel = builder.Build();
         kernel.RegisterSemanticSkills(Directory.GetCurrentDirectory() + "\\Skills\\Semantic", logger);
-        kernel.RegisterNativeSkills(mysqlConnectionString);
+        kernel.RegisterNativeSkills(mysqlConnectionString, logger);
 
         return kernel;
     }
 
-    private static void RegisterNativeSkills(this IKernel kernel, string mysqlConnectionString)
+    private static void RegisterNativeSkills(this IKernel kernel, string mysqlConnectionString, ILogger logger)
     {
         // DocumentSkill documentSkill = new(new WordDocumentConnector(), new LocalFileSystemConnector());
         // kernel.ImportSkill(documentSkill, nameof(DocumentSkill));
@@ -69,8 +69,8 @@ internal static class SemanticKernelFactory
         // var webFileDownloadSkill = new WebFileDownloadSkill();
         // kernel.ImportSkill(webFileDownloadSkill, nameof(WebFileDownloadSkill));
 
-        StockDbSkill stockDbSkill = new(kernel, mysqlConnectionString, null);
-        StockSkill stockSkill = new(kernel, stockDbSkill, null);
+        StockDbSkill stockDbSkill = new(kernel, mysqlConnectionString, logger);
+        StockSkill stockSkill = new(kernel, stockDbSkill, logger);
         kernel.ImportSkill(stockSkill, nameof(StockSkill));
     }
 

@@ -13,11 +13,11 @@ public static class DateTimeUtils
     /// 规则：如果新闻发生在9-15点，那么算作当天交易日
     /// 如果新闻发生在15点到次日9点，那么算作次日交易日
     /// </summary>
-    /// <param name="timeScamp">时间戳</param>
-    /// <returns>所属交易日期：2022-5-23</returns>
-    public static string GetTransactionDate(this int timeScamp)
+    /// <param name="timeStamp">时间戳</param>
+    /// <returns>所属交易日期：2023-05-23</returns>
+    public static string GetTransactionDate(this int timeStamp)
     {
-        var time = new DateTime(1970, 1, 1, 8, 0, 0).AddSeconds(timeScamp);
+        var time = new DateTime(1970, 1, 1, 8, 0, 0).AddSeconds(timeStamp);
         if (time.Hour >= 15)
         {
             time = time.AddDays(1);

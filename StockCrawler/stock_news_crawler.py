@@ -29,17 +29,17 @@ def crawler_sina(
 
     # 获取数据库中新闻时间最新一条数据，用以比对时间
     mysql_connector.execute_sql(f'''
-        select time_scamp from {table_name}
+        select time_stamp from {table_name}
         where stock_code='{stock_code}'
-        order by time_scamp desc
+        order by time_stamp desc
         limit 1
     ''')
     mysql_connector.commit()
-    last_time_scamp = mysql_connector.cursor.fetchone()
-    if last_time_scamp is None:
-        last_time_scamp = -1
+    last_time_stamp = mysql_connector.cursor.fetchone()
+    if last_time_stamp is None:
+        last_time_stamp = -1
     else:
-        last_time_scamp = last_time_scamp['time_scamp']
+        last_time_stamp = last_time_stamp['time_stamp']
     try:
         for page in range(page_count):
             res = requests.get(f'{base_url}?symbol={sina_stock_code}&Page={page + 1}')
@@ -56,12 +56,12 @@ def crawler_sina(
                     time_array = time.strptime(news_time, '%Y-%m-%d %H:%M')
                     time_stamp = int(time.mktime(time_array))
                     # 如发现数据库的时间已经大于当前时间，则停止爬取
-                    if last_time_scamp >= time_stamp:
+                    if last_time_stamp >= time_stamp:
                         mysql_connector.close()
                         return
                     mysql_connector.execute_sql(f'''
                         insert into {table_name}(
-                            stock_code, time_scamp, news_title, news_content, news_link
+                            stock_code, time_stamp, news_title, news_content, news_link
                         ) values
                         ('{stock_code}', {time_stamp}, '{news_title}', '', '{link}')
                     ''')

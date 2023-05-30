@@ -62,8 +62,8 @@ class MongoConnector(object):
         else:
             return self.collection.find(filter=m_filter).skip((cur - 1) * per).limit(per)
 
-    def find_by_filter(self, m_filter):
-        return self.collection.find(filter=m_filter)
+    def find_by_filter(self, m_filter, m_sort=None):
+        return self.collection.find(filter=m_filter, sort=m_sort)
 
     def dis_connect(self):
         self.client.close()

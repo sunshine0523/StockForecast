@@ -63,6 +63,9 @@ const selectStock = ref('')
 const getStockLoading = ref(false)
 const stockDailyList = ref([])
 const getStockDailyLoading = ref(false)
+const lastDaysScoreList = ref([])
+//预测股票的天数，是从过去n天开始，不是未来n天
+let forecastDaysCount = 3
 
 onMounted(()=>{
   if (!validLogin()) router.push('/login')
@@ -92,13 +95,27 @@ const getStockDaily = () => {
   axios.get(`${baseUrls.crawler}/getStockDailyList?stock_code=${selectStock.value}`)
       .then((response) => {
         stockDailyList.value = response.data.data
-        updateStockEcharts()
+        getLastDaysScore(stockDailyList.value[stockDailyList.value.length - 1].trade_date, forecastDaysCount)
       })
       .catch((e)=>{
         ElMessage('获取信息时出现问题 ' + e)
       })
       .finally(()=>{
         getStockDailyLoading.value = false
+      })
+}
+
+const getLastDaysScore = (end_date: string, day_count: number) => {
+  //在计算均线前，先获取最新一日的新闻情绪分数
+  axios.get(`${baseUrls.crawler}/getLastDaysDailyNewsEmotionScoreList?stock_code=${selectStock.value}&end_date=${end_date}&days_count=${day_count}`)
+      .then((response) => {
+        lastDaysScoreList.value = response.data.data
+      })
+      .catch((e)=>{
+        ElMessage('获取情绪分数时出现问题 ' + e)
+      })
+      .finally(()=>{
+        updateStockEcharts()
       })
 }
 
@@ -118,12 +135,42 @@ const splitDailyData = () => {
     values.push(value);
     volumes.push(rawData[i].vol)
   }
-
+  volumes.push('-')
   return {
     categoryData: categoryData,
     values: values,
     volumes: volumes
   };
+}
+
+// 用于计算均线的函数
+function calculateMA(dayCount, data) {
+  const result = [];
+  for (let i = 0, len = data.values.length; i < len; i++) {
+    if (i < dayCount) {
+      result.push('-');
+      continue;
+    }
+    let sum = 0;
+    for (let j = 0; j < dayCount; j++) {
+      sum += data.values[i - j][1];
+    }
+    result.push(+(sum / dayCount).toFixed(3));
+  }
+  return result;
+}
+
+function getForecast(data, day_count) {
+  let ma1 = calculateMA(1, data)
+  const result = [];
+  for (let i = 0, len = data.values.length; i < len - day_count; ++i) {
+    result.push('-');
+  }
+  result.push(ma1[ma1.length - day_count])
+  for (let i = day_count; i > 0; --i) {
+    result.push(result[result.length - 1] + lastDaysScoreList.value[day_count - i].score)
+  }
+  return result
 }
 
 const updateStockEcharts = () => {
@@ -145,7 +192,7 @@ const updateStockEcharts = () => {
     animation: false,
     legend: {
       left: 'center',
-      data: ['日K']
+      data: ['日K', '收盘价', '预测']
     },
     tooltip: {
       trigger: 'axis',
@@ -254,7 +301,7 @@ const updateStockEcharts = () => {
       {
         type: 'inside',
         xAxisIndex: [0, 1],
-        start: 0,
+        start: 90,
         end: 100
       },
       {
@@ -277,18 +324,25 @@ const updateStockEcharts = () => {
           borderColor: undefined,
           borderColor0: undefined
         },
-        tooltip: {
-          formatter: function (param) {
-            param = param[0];
-            return [
-              'Date: ' + param.name + '<hr size=1 style="margin: 3px 0">',
-              'Open: ' + param.data[0] + '<br/>',
-              'Close: ' + param.data[1] + '<br/>',
-              'Lowest: ' + param.data[2] + '<br/>',
-              'Highest: ' + param.data[3] + '<br/>'
-            ].join('');
-          }
-        },
+      },
+      {
+        name: '收盘价',
+        type: 'line',
+        data: calculateMA(1, data),
+        smooth: true,
+        lineStyle: {
+          opacity: 1
+        }
+      },
+      {
+        name: '预测',
+        type: 'line',
+        data: getForecast(data, forecastDaysCount),
+        smooth: true,
+        lineStyle: {
+          opacity: 1,
+          type: 'dotted'
+        }
       },
       {
         name: '成交量',

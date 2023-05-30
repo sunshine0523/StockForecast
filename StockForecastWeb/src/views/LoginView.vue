@@ -65,7 +65,7 @@ const toLogin = () => {
   ).then((response) => {
     ElMessage("验证成功")
     localStorage.setItem("token", response.data.token)
-    router.push('/')
+    document.location.href='/'
   }).catch((e) => {
     ElMessage("验证失败" + e)
   }).finally(()=>{

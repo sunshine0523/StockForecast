@@ -38,4 +38,9 @@
       <Folder Include="Skills\Semantic" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Skills\Semantic\SummarizeSkill\Summarize\config.json" />
+      <_ContentIncludedByDefault Remove="Skills\Semantic\SummarizeSkill\MakeAbstractReadable\config.json" />
+    </ItemGroup>
+
 </Project>

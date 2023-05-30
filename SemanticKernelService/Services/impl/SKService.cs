@@ -30,7 +30,7 @@ public class SkService : ISkService
         var result = await kernel.RunAsync(contextVariables, skFunction);
         if (result.ErrorOccurred)
         {
-            throw new Exception("SK ErrorOccurred");
+            throw new Exception("SK ErrorOccurred " + result.LastErrorDescription);
         }
 
         return new AskResult

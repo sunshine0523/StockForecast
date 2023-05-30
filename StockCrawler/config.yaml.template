@@ -16,7 +16,9 @@ stock_info_crawler:
 stock_news_crawler:
   db_name: 'stock'
   table_name: 'stock_news'
+  emotion_table_name: 'news_emotion'
 
+# 日K数据库
 stock_daily_crawler:
   db_name: 'stock'
   collection_name: 'stock_daily'

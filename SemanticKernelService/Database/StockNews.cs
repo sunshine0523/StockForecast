@@ -15,8 +15,8 @@ public class StockNews
     public string StockCode { get; set; }
 
     [Required] 
-    [Column("time_scamp")] 
-    public int TimeScamp { get; set; }
+    [Column("time_stamp")] 
+    public int TimeStamp { get; set; }
     
     [Required] 
     [Column("news_title")] 
@@ -29,4 +29,8 @@ public class StockNews
     [Required] 
     [Column("news_link")] 
     public string NewsLink { get; set; }
+    
+    [Required]
+    [Column("emotion")]
+    public int Emotion { get; set; }
 }

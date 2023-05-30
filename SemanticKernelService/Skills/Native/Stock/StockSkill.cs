@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+﻿using System.Globalization;
+using System.Text;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.SkillDefinition;
-using Microsoft.SemanticKernel.Skills.OpenAPI.Skills;
+using SemanticKernelService.Database;
 using SemanticKernelService.Skills.Native.StockDb;
 using SemanticKernelService.Utils;
 
@@ -14,32 +16,54 @@ namespace SemanticKernelService.Skills.Native.Stock;
 public class StockSkill
 {
     private readonly IKernel _kernel;
-    private readonly ILogger<StockSkill> _logger;
+    private readonly ILogger _logger;
     private readonly StockDbSkill _stockDbSkill;
+    /// <summary>
+    /// 给定一条新闻，分析其情绪
+    /// </summary>
     private readonly ISKFunction _newsEmotionAnalysisFunction;
+    
+    /// <summary>
+    /// 给定一个新闻列表，返回它们的情绪列表
+    /// </summary>
+    private readonly ISKFunction _newsListEmotionAnalysisFunction;
 
-    internal const string NewsEmotionAnalysisDefinition =
-        @"Forget all your previous instructions. Pretend you are a financial expert. You are
-a financial expert with stock recommendation experience. Answer “YES” if good
-news, “NO” if bad news, or “UNKNOWN” if uncertain in the first line.  You must answer 'YES', 'NO' or 'UNKNOWN'. Do not answer any other word. Is this headline
-good or bad for the stock price of company name in the term term?
+    /// <summary>
+    /// 给定一个新闻列表，总结其整体的情绪
+    /// </summary>
+    private readonly ISKFunction _summarizeNewsEmotionFunction;
 
-{{$INPUT}}
-";
+    private const int TenDays = 10 * 24 * 60 * 60;
+    private const int NewsListMaxToken = 500;
+    private const int SummarizeNewsMaxToken = 2000;
 
-    private const int TenDays = 10 * 5 * 60 * 60;
-
-    public StockSkill(IKernel kernel, StockDbSkill stockDbSkill, ILogger<StockSkill>? logger)
+    public StockSkill(IKernel kernel, StockDbSkill stockDbSkill, ILogger? logger)
     {
         _kernel = kernel;
         _stockDbSkill = stockDbSkill;
-        _logger = logger ?? NullLogger<StockSkill>.Instance;
+        _logger = logger ?? NullLogger.Instance;
         _newsEmotionAnalysisFunction = kernel.CreateSemanticFunction(
-            NewsEmotionAnalysisDefinition,
+            StockSkillDefinition.NewsEmotionAnalysisDefinition,
             skillName: nameof(StockSkill),
             description: "Give a news, result its emotion",
             maxTokens: 500,
             temperature: 0.1,
+            topP: 0.5
+        );
+        _newsListEmotionAnalysisFunction = kernel.CreateSemanticFunction(
+            StockSkillDefinition.NewsListEmotionAnalysisDefinition,
+            skillName: nameof(StockSkill),
+            description: "Give news list, result their emotion list",
+            maxTokens: NewsListMaxToken,
+            temperature: 0.1,
+            topP: 0.5
+        );
+        _summarizeNewsEmotionFunction = kernel.CreateSemanticFunction(
+            StockSkillDefinition.SummarizeNewsEmotionDefinition,
+            skillName: nameof(StockSkill),
+            description: "Give news list, summarize their emotion",
+            maxTokens: SummarizeNewsMaxToken,
+            temperature: 0.7,
             topP: 0.5
         );
     }
@@ -54,50 +78,132 @@ good or bad for the stock price of company name in the term term?
     [SKFunctionInput(Description = "The code of the stock to be analyzed")]
     public async Task AnalysisStockNews(string stockCode, SKContext context)
     {
-        var stockNewsList = _stockDbSkill.GetStockNewsListAsync(stockCode, context);
-        //按照交易日存储交易日新闻的分数，key: 2022-5-23, value: 3
-        Dictionary<string, int> newsEmotionScore = new Dictionary<string, int>();
+        var stockNewsList = _stockDbSkill.GetStockNewsList(stockCode, context);
 
-        try
+        var builder = new StringBuilder();
+        
+        var stockNewsAnalysisItemList = new List<StockNews>();
+
+        for (var i = 0; i < stockNewsList.Count; ++i)
         {
-            foreach (var stockNews in stockNewsList)
+            //新闻已经分析过则不再分析
+            if (stockNewsList[i].Emotion != -2 || stockNewsList[i].NewsTitle.Length == 0) continue;
+
+            //token已经满或者已经到达最后一个新闻或者时间已经到达设定时间就向语言模型进行一次请求
+            //注意第三个条件成立需要保证新闻列表按照时间顺序倒序排列
+            if (builder.Length > NewsListMaxToken - 100 || 
+                i >= stockNewsList.Count - 1 || 
+                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays)
             {
-                //只分析十日内的新闻
-                if (DateTime.Now.ToLocalTime().GetTimeStamp() - stockNews.TimeScamp > TenDays)
+                //如果当前的新闻列表为空，那么继续
+                if (builder.Length == 0) continue;
+                
+                //如果因为token到了而去请求，则需要-1
+                if (builder.Length > NewsListMaxToken - 100 && i > 0) --i;
+                builder.Remove(builder.Length - 1, 1);
+                
+                //请求语言模型
+                _logger.LogError($"执行中 {builder}");
+                var result = await _kernel.RunAsync(builder.ToString(), _newsListEmotionAnalysisFunction);
+                _logger.LogError($"执行完毕 {result.Result}");
+                if (result.ErrorOccurred)
                 {
-                    break;
+                    _logger.LogError($"AnalysisStockNews Error {result.LastErrorDescription}");
+                    throw new Exception($"AnalysisStockNews Error {result.LastErrorDescription}");
                 }
-                var transactionDate = stockNews.TimeScamp.GetTransactionDate();
-                if (!newsEmotionScore.ContainsKey(transactionDate))
+                
+                //分析语言模型返回的结果
+                var emotionList = GetEmotionList(result.Result);
+                _logger.LogError($"emotion {emotionList.Count} news {stockNewsAnalysisItemList.Count}");
+
+                //如果两者长度不一致，则不要添加到数据库中
+                if (emotionList.Count != stockNewsAnalysisItemList.Count)
                 {
-                    newsEmotionScore.Add(transactionDate, 0);
+                    continue;
                 }
-                var result = await _kernel.RunAsync(stockNews.NewsTitle, _newsEmotionAnalysisFunction);
-                if (result.ErrorOccurred) _logger.LogError("Analysis News Emotion Error");
-                else
+                for (var j = 0; j < stockNewsAnalysisItemList.Count; ++j)
                 {
-                    switch (result.Result)
-                    {
-                        case "YES":
-                            ++newsEmotionScore[transactionDate];
-                            break;
-                        case "NO":
-                            --newsEmotionScore[transactionDate];
-                            break;
-                    }
+                    stockNewsAnalysisItemList[j].Emotion = emotionList[j];
                 }
+                
+                //存储到数据库中
+                _stockDbSkill.UpdateStockNewsList(stockNewsAnalysisItemList, context);
+
+                builder.Clear();
+                stockNewsAnalysisItemList.Clear();
+
+                if (DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays) break;
+
                 Thread.Sleep(500);
             }
-            foreach (var keyValuePair in newsEmotionScore)
+            else
             {
-                Console.WriteLine(keyValuePair.Key + " " + keyValuePair.Value);
+                stockNewsAnalysisItemList.Add(stockNewsList[i]);
+                builder.Append("NEWS:'").Append(stockNewsList[i].NewsTitle.Replace("“", "").Replace("”", "").Replace("'", "").Replace("\"", "")).Append("'\n");
             }
+        }
+    }
+
+    [SKFunction("Summarize news list emotion of a day")]
+    [SKFunctionName("SummarizeNewsEmotion")]
+    [SKFunctionInput(Description = "The code of the stock to be summarized")]
+    [SKFunctionContextParameter(Name = "day",
+        Description = "Which day need to summarized, format: yyyy-MM-dd")]
+    public async Task<string> SummarizeNewsEmotion(string stockCode, SKContext context)
+    {
+        //获取交易时间范围内的新闻
+        if (!context.Variables.Get("day", out string day) || string.IsNullOrEmpty(day))
+        {
+            day = "1970-01-01";
+        }
+        DateTime dateTime = DateTime.Parse(day);
+        var timeStamp = dateTime.GetTimeStamp();
+        //获取在昨天15点之后到今天15点之间的新闻
+        var startTime = timeStamp - 9 * 60 * 60;
+        var endTime = timeStamp + 15 * 60 * 60;
+        var dailyNewsList = _stockDbSkill.GetStockDailyNewsList(stockCode, startTime, endTime);
+        
+        var builder = new StringBuilder();
+        foreach (var stockNews in dailyNewsList)
+        {
+            if (builder.Length > SummarizeNewsMaxToken - 200) break;
+            builder.Append("NEWS:'").Append(stockNews.NewsTitle).Append("',\n");
+        }
+        //请求语言模型
+        _logger.LogError($"执行中 {builder}");
+        var result = await _kernel.RunAsync(builder.ToString(), _summarizeNewsEmotionFunction);
+        _logger.LogError($"执行完毕 {result.Result}");
+
+        var newsEmotion = new NewsEmotion
+        {
+            NewsTime = day, StockCode = stockCode, Emotion = result.Result
+        };
+        _stockDbSkill.UpdateNewsEmotion(newsEmotion);
+
+        return newsEmotion.Emotion;
+    }
+
+    private List<int> GetEmotionList(string llmResult)
+    {
+        try
+        {
+            var result = new List<int>();
+            foreach (var s in llmResult.Split(","))
+            {
+                //对于出现以,结尾的特殊处理
+                if (s == "")
+                {
+                    continue;
+                }
+                result.Add(int.Parse(s));
+            }
+
+            return result;
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            throw;
+            _logger.LogError(e.Message);
+            throw new Exception($"Parse {llmResult} error: {e.Message}");
         }
-        
     }
 }
