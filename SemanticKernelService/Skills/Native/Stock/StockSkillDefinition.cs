@@ -18,9 +18,9 @@ news, “-1” if bad news, or “0” if uncertain in the first line. You recei
 
 [START EXAMPLE]
 [INPUT]
-NEWS: 'news1',
-NEWS: 'news2',
-NEWS: 'news3',
+###NEWS###: news1 ###NEWS END###
+###NEWS###: news2 ###NEWS END###
+###NEWS###: news3 ###NEWS END###
 [RESULT] 
 1,-1,0
 [END EXAMPLE]

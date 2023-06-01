@@ -1,3 +1,4 @@
+import datetime
 import time
 
 from db_utils import MySQLConnector
@@ -5,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def crawler_sina(
+def crawl_sina(
     stock_code: str,
     db_name: str = 'stock',
     table_name: str = 'stock_news',
@@ -30,7 +31,7 @@ def crawler_sina(
     # 获取数据库中新闻时间最新一条数据，用以比对时间
     mysql_connector.execute_sql(f'''
         select time_stamp from {table_name}
-        where stock_code='{stock_code}'
+        where stock_code='{stock_code}' and type = 1
         order by time_stamp desc
         limit 1
     ''')
@@ -61,11 +62,76 @@ def crawler_sina(
                         return
                     mysql_connector.execute_sql(f'''
                         insert into {table_name}(
-                            stock_code, time_stamp, news_title, news_content, news_link
+                            stock_code, time_stamp, news_title, news_content, news_link, type
                         ) values
-                        ('{stock_code}', {time_stamp}, '{news_title}', '', '{link}')
+                        ('{stock_code}', {time_stamp}, '{news_title}', '', '{link}', 1)
                     ''')
                     mysql_connector.db.commit()
+            time.sleep(1)
+    except Exception as e:
+        print(e)
+
+    mysql_connector.close()
+
+
+def crawl_guba(
+    stock_code: str,
+    db_name: str = 'stock',
+    table_name: str = 'stock_news',
+    page_count: int = 10
+):
+    """
+    爬取股吧网友评论，因为某些新闻并不能代表实际走势，看股吧评论也许能够了解真实情况...
+    :param stock_code:
+    :param db_name:
+    :param table_name:
+    :param page_count:
+    :return:
+    """
+    mysql_connector = MySQLConnector(db_name)
+
+    # 对于股吧，接受的股票代码格式如：000001，需要预处理
+    guba_stock_code = ''.join(stock_code.split('.')[0])
+    base_url = f'http://guba.eastmoney.com/o/list,{guba_stock_code}_'
+
+    # 获取数据库中新闻时间最新一条数据，用以比对时间
+    mysql_connector.execute_sql(f'''
+            select time_stamp from {table_name}
+            where stock_code='{stock_code}' and type = 2
+            order by time_stamp desc
+            limit 1
+        ''')
+    mysql_connector.commit()
+    last_time_stamp = mysql_connector.cursor.fetchone()
+    if last_time_stamp is None:
+        last_time_stamp = -1
+    else:
+        last_time_stamp = last_time_stamp['time_stamp']
+    try:
+        for page in range(page_count):
+            res = requests.get(f'{base_url}{page + 1}.html')
+            soup = BeautifulSoup(res.text, 'html.parser')
+            for news in soup.find_all('div', attrs={'class': 'articleh'}):
+                news_title = news.find('a').text
+                news_link = news.find('a')['href']
+                if news_link.startswith('//'):
+                    news_link = 'https:' + news_link
+                else:
+                    news_link = 'http://guba.eastmoney.com/o' + news_link
+                time_str = news.find('span', attrs={'class': 'l5 a5'}).text
+                time_array = time.strptime(datetime.datetime.now().year.__str__() + '-' + time_str, '%Y-%m-%d %H:%M')
+                time_stamp = int(time.mktime(time_array))
+                # 如发现数据库的时间已经大于当前时间，则停止爬取
+                if last_time_stamp >= time_stamp:
+                    mysql_connector.close()
+                    return
+                mysql_connector.execute_sql(f'''
+                                            insert into {table_name}(
+                                                stock_code, time_stamp, news_title, news_content, news_link, type
+                                            ) values
+                                            ('{stock_code}', {time_stamp}, '{news_title}', '', '{news_link}', 2)
+                                        ''')
+                mysql_connector.db.commit()
             time.sleep(1)
     except Exception as e:
         print(e)

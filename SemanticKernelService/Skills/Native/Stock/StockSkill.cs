@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
@@ -91,10 +92,13 @@ public class StockSkill
 
             //token已经满或者已经到达最后一个新闻或者时间已经到达设定时间就向语言模型进行一次请求
             //注意第三个条件成立需要保证新闻列表按照时间顺序倒序排列
-            if (builder.Length > NewsListMaxToken - 100 || 
-                i >= stockNewsList.Count - 1 || 
-                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays)
-            {
+            //因为每次分析过多条数可能会导致GPT分解失败，所以不让每次分析的新闻条数大于10
+            if (builder.Length > NewsListMaxToken - 100 ||
+                i >= stockNewsList.Count - 1 ||
+                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays || 
+                stockNewsAnalysisItemList.Count > 10)
+
+        {
                 //如果当前的新闻列表为空，那么继续
                 if (builder.Length == 0) continue;
                 
@@ -117,17 +121,15 @@ public class StockSkill
                 _logger.LogError($"emotion {emotionList.Count} news {stockNewsAnalysisItemList.Count}");
 
                 //如果两者长度不一致，则不要添加到数据库中
-                if (emotionList.Count != stockNewsAnalysisItemList.Count)
+                if (emotionList.Count == stockNewsAnalysisItemList.Count)
                 {
-                    continue;
+                    for (var j = 0; j < stockNewsAnalysisItemList.Count; ++j)
+                    {
+                        stockNewsAnalysisItemList[j].Emotion = emotionList[j];
+                    }
+                    //存储到数据库中
+                    _stockDbSkill.UpdateStockNewsList(stockNewsAnalysisItemList, context);
                 }
-                for (var j = 0; j < stockNewsAnalysisItemList.Count; ++j)
-                {
-                    stockNewsAnalysisItemList[j].Emotion = emotionList[j];
-                }
-                
-                //存储到数据库中
-                _stockDbSkill.UpdateStockNewsList(stockNewsAnalysisItemList, context);
 
                 builder.Clear();
                 stockNewsAnalysisItemList.Clear();
@@ -139,7 +141,7 @@ public class StockSkill
             else
             {
                 stockNewsAnalysisItemList.Add(stockNewsList[i]);
-                builder.Append("NEWS:'").Append(stockNewsList[i].NewsTitle.Replace("“", "").Replace("”", "").Replace("'", "").Replace("\"", "")).Append("'\n");
+                builder.Append("###NEWS###:").Append(stockNewsList[i].NewsTitle.ReplaceSpecialSymbol()).Append(" ###NEWS END###\n");
             }
         }
     }
@@ -206,4 +208,5 @@ public class StockSkill
             throw new Exception($"Parse {llmResult} error: {e.Message}");
         }
     }
+    
 }

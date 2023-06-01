@@ -1,12 +1,8 @@
 import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 import server_func
-import stock_info_crawler
 import uvicorn
-
-import stock_news_crawler
 
 
 def init_config():
@@ -39,50 +35,38 @@ def get_stock_list(query: str):
 
 
 @app.get('/getStockNewsList')
-def get_stock_news_list(query: str):
+def get_stock_news_list(query: str, news_type: int = 1):
     """
     获取股票新闻列表
+    :param news_type:
     :param query:
     :return:
     """
-    return {'data': server_func.get_stock_news_list(query)}
+    return {'data': server_func.get_stock_news_list(query, news_type)}
 
 
 @app.get('/refreshStockNews')
-def refresh_stock_news(stock_code: str, page_count: int = 10):
+def refresh_stock_news(stock_code: str, page_count: int = 10, news_type: int = 1):
     """
     刷新股票新闻
+    :param news_type: 爬取的源，1新浪财经 2股吧
     :param stock_code:
     :param page_count:
     :return:
     """
-    stock_news_crawler.crawler_sina(
-        stock_code=stock_code,
-        db_name=config['stock_news_crawler']['db_name'],
-        table_name=config['stock_news_crawler']['table_name'],
-        page_count=page_count
-    )
-    return get_stock_news_list(query=stock_code)
-
-
-@app.get('/getStockDailyList')
-def get_stock_daily_list(stock_code: str):
-    """
-    获取股票日K
-    :param stock_code:
-    :return:
-    """
-    return {'data': stock_info_crawler.crawl_stock_daily(stock_code)}
+    server_func.refresh_stock_news(stock_code, page_count, news_type)
+    return get_stock_news_list(query=stock_code, news_type=news_type)
 
 
 @app.get('/getStockNewsEmotionList')
-def get_stock_news_emotion_list(stock_code: str):
+def get_stock_news_emotion_list(stock_code: str, news_type: int = -1):
     """
     获取近10日的股票新闻情感信息，按日分组
+    :param news_type: -1表示查询所有来源
     :param stock_code:
     :return:
     """
-    return {'data': server_func.get_news_emotion_list(stock_code)}
+    return {'data': server_func.get_news_emotion_list(stock_code, news_type)}
 
 
 @app.get('/getDailyNewsEmotionScore')
@@ -97,15 +81,44 @@ def get_stock_news_emotion(stock_code: str, news_date: str):
 
 
 @app.get('/getLastDaysDailyNewsEmotionScoreList')
-def get_stock_news_emotion_list(stock_code: str, end_date: str, days_count: int):
+def get_stock_news_emotion_list(stock_code: str, days_count: int):
     """
     获取end_date前days_count天数的股票预测情况
     :param stock_code:
-    :param end_date: 预测的结束日期
     :param days_count: 预测的天数
     :return:
     """
-    return {'data': server_func.get_last_days_daily_news_emotion_score(stock_code, end_date, days_count)}
+    return {'data': server_func.get_last_days_daily_news_emotion_score(stock_code, days_count)}
+
+
+@app.get('/getStockDailyList')
+def get_stock_daily_list(stock_code: str):
+    """
+    获取股票日K
+    :param stock_code:
+    :return:
+    """
+    return {'data': server_func.get_stock_daily_list(stock_code)}
+
+
+@app.get('/getStockCurrentInfo')
+def get_stock_current_info(stock_code: str):
+    """
+    获取股票实时信息
+    :param stock_code:
+    :return:
+    """
+    return {'data': server_func.get_stock_current_info(stock_code)}
+
+
+@app.get('/getStockMinuteList')
+def get_stock_minute_list(stock_code: str):
+    """
+    获取股票分时信息
+    :param stock_code:
+    :return:
+    """
+    return {'data': server_func.get_stock_minute(stock_code)}
 
 
 if __name__ == '__main__':

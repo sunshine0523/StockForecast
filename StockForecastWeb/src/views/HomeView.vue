@@ -1,6 +1,5 @@
 <template>
-  <h1 class="title">大语言模型股票走势预测程序</h1>
-  <div>
+  <div class="image-div">
     <el-carousel height="450px" style="width: 80%; margin: 0 10%">
       <el-carousel-item v-for="image in imageList" :key="image">
         <el-card>
@@ -21,9 +20,12 @@ const imageList = [
 </script>
 
 <style scoped>
-.title {
-  text-align: center;
-  font-size: x-large;
-  margin-bottom: 32px;
+.image-div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10rem;
+  z-index: -1;
 }
 </style>

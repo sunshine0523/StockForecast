@@ -21,30 +21,46 @@
           :value="item.ts_code"
       />
     </el-select>
-    <div class="news_option" v-show="getStockNewsDone">
-      <el-button type="primary" :loading="refreshStockNews" @click="refreshStockNewsFunc"><i-ep-refresh/>&nbsp;刷新</el-button>
-    </div>
-    <div class="time-line">
-      <el-skeleton :rows="10" animated :loading="getStockNewsLoading">
-        <template #default>
-          <el-empty v-if="stockNewsList.length === 0" description="还没有相关新闻哦" />
-          <el-timeline v-else>
-            <el-timeline-item
-              v-for="(news, index) in stockNewsList"
-              :key="index"
-              :size="'large'"
-              :timestamp="news.time"
-              :hollow="true"
-              :type="'primary'"
-              placement="top"
-              >
-                <el-link :href="news.news_link" type="default" target="_blank">{{news.news_title}}</el-link>
-            </el-timeline-item>
-          </el-timeline>
-        </template>
-      </el-skeleton>
-    </div>
+    <el-row style="margin-top: 20px">
+      <el-col :span="4">
+
+      </el-col>
+      <el-col :span="16">
+        <el-tabs v-model="activeTabName" @tab-change="getStockNews">
+          <el-tab-pane label="新浪财经" name="1">
+
+          </el-tab-pane>
+          <el-tab-pane label="股吧" name="2">
+
+          </el-tab-pane>
+        </el-tabs>
+        <div class="news_option" v-show="getStockNewsDone">
+          <el-button type="primary" :loading="refreshStockNews" @click="refreshStockNewsFunc"><i-ep-refresh/>&nbsp;刷新</el-button>
+        </div>
+        <div class="time-line">
+          <el-skeleton :rows="10" animated :loading="getStockNewsLoading">
+            <template #default>
+              <el-empty v-if="stockNewsList.length === 0" description="还没有相关新闻哦" />
+              <el-timeline v-else>
+                <el-timeline-item
+                    v-for="(news, index) in stockNewsList"
+                    :key="index"
+                    :size="'large'"
+                    :timestamp="news.time"
+                    :hollow="true"
+                    :type="'primary'"
+                    placement="top"
+                >
+                  <el-link :href="news.news_link" type="default" target="_blank">{{news.news_title}}</el-link>
+                </el-timeline-item>
+              </el-timeline>
+            </template>
+          </el-skeleton>
+        </div>
+      </el-col>
+    </el-row>
   </div>
+  <el-backtop :right="100" :bottom="100" />
 </template>
 
 <script setup lang="ts">
@@ -56,6 +72,8 @@ import baseUrls from "@/config/baseUrlConfig";
 import {ElMessage} from "element-plus";
 
 const router = useRouter()
+
+const activeTabName = ref('1')
 
 const stockList = ref<string[]>([])
 const selectStock = ref('')
@@ -91,7 +109,7 @@ const onSelectStock = () => {
 const getStockNews = () => {
   getStockNewsLoading.value = true
   getStockNewsDone.value = false
-  axios.get(`${baseUrls.crawler}/getStockNewsList?query=${selectStock.value}`)
+  axios.get(`${baseUrls.crawler}/getStockNewsList?query=${selectStock.value}&news_type=${activeTabName.value}`)
       .then((response)=>{
         stockNewsList.value = response.data.data
         getStockNewsDone.value = true
@@ -107,7 +125,7 @@ const getStockNews = () => {
 const refreshStockNewsFunc = () => {
   getStockNewsLoading.value = true
   refreshStockNews.value = true
-  axios.get(`${baseUrls.crawler}/refreshStockNews?stock_code=${selectStock.value}&page_count=5`)
+  axios.get(`${baseUrls.crawler}/refreshStockNews?stock_code=${selectStock.value}&page_count=5&news_type=${activeTabName.value}`)
       .then((response)=>{
         stockNewsList.value = response.data.data
       })
@@ -133,17 +151,12 @@ const refreshStockNewsFunc = () => {
 }
 .stock-select {
   margin-top: 16px;
-  width: 80%;
+  width: 75%;
 }
 .news_option {
   text-align: end;
-  margin-right: 10%;
-  margin-top: 20px;
 }
 .time-line {
   text-align: start;
-  margin-top: 20px;
-  margin-left: 10%;
-  margin-right: 10%;
 }
 </style>

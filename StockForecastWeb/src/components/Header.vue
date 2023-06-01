@@ -4,6 +4,7 @@
     :default-active=activeIndex
     mode="horizontal"
     :ellipsis="false"
+    background-color="#00000000"
   >
     <el-link href="/" class="title" type="primary" :underline="false">大模型股票预测</el-link>
     <el-menu-item index="stockNews">行情</el-menu-item>
@@ -60,6 +61,9 @@ const toLogin = () => {
 </script>
 
 <style scoped>
+.el-menu {
+  border-bottom: 0;
+}
 .title {
   margin: auto 1em;
   font-size: larger;

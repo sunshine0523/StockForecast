@@ -30,7 +30,6 @@ import {RouterView} from 'vue-router'
 
   .el-header,
   .el-footer {
-    //background-color: var(--el-color-primary-light-7);
     color: var(--el-text-color-primary);
     text-align: center;
   }
@@ -38,7 +37,7 @@ import {RouterView} from 'vue-router'
   .el-main {
     //background-color: var(--el-color-primary-light-9);
     color: var(--el-text-color-primary);
-    text-align: center;
+    min-height: 500px;
   }
 }
 </style>
