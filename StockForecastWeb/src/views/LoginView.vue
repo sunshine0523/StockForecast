@@ -1,6 +1,11 @@
 <template>
+  <div class="login-header-div"/>
   <el-row>
-    <el-col :span="16"/>
+    <el-col :span="16">
+      <div class="login-img-div">
+        <el-image src="login.svg" fit="fill" />
+      </div>
+    </el-col>
     <el-col :span="8">
       <el-card>
         <h2 class="login-title">登录</h2>
@@ -82,5 +87,22 @@ const toLogin = () => {
 .login-button {
   width: 100%;
   margin: 6px 0;
+}
+.login-img-div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 70%;
+  height: 70%;
+  margin: 5% 15% 0 15%;
+}
+.login-header-div {
+  position: absolute;
+  background-image: linear-gradient(to top, #ffffff, #c9cad7, #9299b2, #576b8d, #03426a);
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 200px;
+  z-index: -1
 }
 </style>

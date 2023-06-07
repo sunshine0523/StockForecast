@@ -87,16 +87,14 @@ public class StockSkill
 
         for (var i = 0; i < stockNewsList.Count; ++i)
         {
-            //新闻已经分析过则不再分析
-            if (stockNewsList[i].Emotion != -2 || stockNewsList[i].NewsTitle.Length == 0) continue;
+            //新闻已经分析过则不再分析，标题过短的也不进行分析
+            if (stockNewsList[i].Emotion != -2 || stockNewsList[i].NewsTitle.Length <= 5) continue;
 
             //token已经满或者已经到达最后一个新闻或者时间已经到达设定时间就向语言模型进行一次请求
             //注意第三个条件成立需要保证新闻列表按照时间顺序倒序排列
-            //因为每次分析过多条数可能会导致GPT分解失败，所以不让每次分析的新闻条数大于10
             if (builder.Length > NewsListMaxToken - 100 ||
                 i >= stockNewsList.Count - 1 ||
-                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays || 
-                stockNewsAnalysisItemList.Count > 10)
+                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays)
 
         {
                 //如果当前的新闻列表为空，那么继续

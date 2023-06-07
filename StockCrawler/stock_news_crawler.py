@@ -107,33 +107,45 @@ def crawl_guba(
         last_time_stamp = -1
     else:
         last_time_stamp = last_time_stamp['time_stamp']
-    try:
-        for page in range(page_count):
+
+    for page in range(page_count):
+        print(f'爬取第{page}页')
+        try:
             res = requests.get(f'{base_url}{page + 1}.html')
             soup = BeautifulSoup(res.text, 'html.parser')
             for news in soup.find_all('div', attrs={'class': 'articleh'}):
-                news_title = news.find('a').text
-                news_link = news.find('a')['href']
-                if news_link.startswith('//'):
-                    news_link = 'https:' + news_link
-                else:
-                    news_link = 'http://guba.eastmoney.com/o' + news_link
-                time_str = news.find('span', attrs={'class': 'l5 a5'}).text
-                time_array = time.strptime(datetime.datetime.now().year.__str__() + '-' + time_str, '%Y-%m-%d %H:%M')
-                time_stamp = int(time.mktime(time_array))
-                # 如发现数据库的时间已经大于当前时间，则停止爬取
-                if last_time_stamp >= time_stamp:
-                    mysql_connector.close()
-                    return
-                mysql_connector.execute_sql(f'''
-                                            insert into {table_name}(
-                                                stock_code, time_stamp, news_title, news_content, news_link, type
-                                            ) values
-                                            ('{stock_code}', {time_stamp}, '{news_title}', '', '{news_link}', 2)
-                                        ''')
-                mysql_connector.db.commit()
+                try:
+                    news_title = news.find('a').text
+                    news_link = news.find('a')['href']
+                    if news_link.startswith('//'):
+                        news_link = 'https:' + news_link
+                    else:
+                        news_link = 'http://guba.eastmoney.com/o' + news_link
+                    time_str = news.find('span', attrs={'class': 'l5 a5'}).text
+                    time_array = time.strptime(datetime.datetime.now().year.__str__() + '-' + time_str, '%Y-%m-%d %H:%M')
+                    time_stamp = int(time.mktime(time_array))
+                    # 如发现数据库的时间已经大于当前时间，则停止爬取，
+                    # 但是股吧第一页总有奇奇怪怪的置顶不按时间排列，所以第一页不判断
+                    if page != 0 and last_time_stamp >= time_stamp:
+                        print(f'到达上次时间 {last_time_stamp}，当前爬取到的时间 {time_stamp} {time_str}')
+                        mysql_connector.close()
+                        return
+                    mysql_connector.execute_sql(f'''
+                                                insert into {table_name}(
+                                                    stock_code, time_stamp, news_title, news_content, news_link, type
+                                                ) values
+                                                ('{stock_code}', {time_stamp}, '{news_title}', '', '{news_link}', 2)
+                                            ''')
+                    mysql_connector.db.commit()
+                except Exception as e:
+                    print(e)
+                    continue
             time.sleep(1)
-    except Exception as e:
-        print(e)
-
+        except Exception as e:
+            print(e)
+            continue
     mysql_connector.close()
+
+
+if __name__ == '__main__':
+    crawl_guba('002594.SZ')

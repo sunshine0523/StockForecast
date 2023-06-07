@@ -1,31 +1,84 @@
 <template>
   <div class="image-div">
-    <el-carousel height="450px" style="width: 80%; margin: 0 10%">
+    <el-carousel :height="imageHeight" @change="onCarouselChange" interval="4000">
       <el-carousel-item v-for="image in imageList" :key="image">
-        <el-card>
-          <el-image style="width: 100%; height: 100%" :src="image" />
-        </el-card>
+        <el-image style="width: 100%" :style="{height: imageHeight}" :src="image" fit="cover" />
       </el-carousel-item>
     </el-carousel>
   </div>
-
+  <div class="introduction-div">
+    <p id="introduction-text">{{introductionTextList[index]}}</p>
+  </div>
+  <div class="introduction-sub-div">
+    <p id="introduction-sub-text">{{introductionSubTextList[index]}}</p>
+  </div>
 </template>
 
 <script setup lang="ts">
+import {onMounted, ref} from 'vue'
 const imageList = [
-    'fx.png',
-    'hq.png',
-    'yc.png'
+    '01.png',
+    '02.png',
+    '03.png'
 ]
+
+const index = ref(0)
+
+const imageHeight = ref('800px')
+
+const introductionTextList = [
+    'GPT, 您的金融顾问',
+    '新闻情绪, 传递价值',
+    '语言模型, 让预测更简单'
+]
+const introductionSubTextList = [
+    'GPT在背后大量且丰富的语料支持下，已经可以做您可靠的金融顾问。大语言模型股票预测程序使用GPT作为背后支持，可以总结每日新闻情绪、提供金融意见',
+    '各大金融平台每天都会产生大量的新闻，我们被信息包围，但可能只是包围。大语言模型股票预测程序将新闻信息分类，让信息拥有更多价值',
+    '通过语言模型的支持，大语言模型股票预测程序可以轻松解决从前无法想象的问题。语言模型发挥无限可能'
+]
+
+onMounted(()=>{
+  imageHeight.value = document.body.clientHeight + 'px'
+})
+
+function onCarouselChange(i) {
+  index.value = i
+  //让文字有从右向左变化的过程
+  let introductionText = document.getElementById('introduction-text')
+  let introductionSubText = document.getElementById('introduction-sub-text')
+}
 </script>
 
 <style scoped>
 .image-div {
   position: absolute;
-  top: 0;
   left: 0;
+  top: 0;
   width: 100%;
-  height: 10rem;
+  height: auto;
   z-index: -1;
+}
+.introduction-div {
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: end;
+}
+.introduction-sub-div {
+  height: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  margin-top: 10px;
+}
+#introduction-text {
+  font-size: 50px;
+  color: white;
+}
+#introduction-sub-text {
+  font-size: 18px;
+  color: white;
+  max-width: 500px;
+  text-align: center;
 }
 </style>

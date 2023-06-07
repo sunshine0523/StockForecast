@@ -1,17 +1,19 @@
 <template>
   <el-menu
-    router
-    :default-active=activeIndex
-    mode="horizontal"
-    :ellipsis="false"
-    background-color="#00000000"
+      router
+      active-text-color="white"
+      default-active="/"
+      mode="horizontal"
+      :ellipsis="false"
+      background-color="#00000000"
+      text-color="white"
   >
     <el-link href="/" class="title" type="primary" :underline="false">大模型股票预测</el-link>
     <el-menu-item index="stockNews">行情</el-menu-item>
     <el-menu-item index="analysis">分析</el-menu-item>
     <el-menu-item index="forecast">预测</el-menu-item>
     <div class="flex-grow"/>
-    <el-menu-item @click="toLogin">{{loginUser}}</el-menu-item>
+    <el-menu-item @click="toLogin()">{{loginUser}}</el-menu-item>
   </el-menu>
 </template>
 
@@ -27,8 +29,6 @@ onMounted(()=>{
 })
 
 const router = useRouter()
-
-const activeIndex = ref('index')
 
 const loginUser = ref('登录')
 
@@ -48,7 +48,7 @@ const validLogin = () => {
 const toLogin = () => {
   const isLogin = sessionStorage.getItem('isLogin') == '1'
   if(isLogin) {
-    ElMessageBox.confirm('要退出登录吗？')
+    ElMessageBox.confirm('要退出登录吗？', '提示')
       .then(()=>{
         loginUser.value = '登录'
         sessionStorage.setItem('isLogin', '0')
@@ -67,6 +67,7 @@ const toLogin = () => {
 .title {
   margin: auto 1em;
   font-size: larger;
+  color: white;
 }
 .flex-grow {
   flex-grow: 1;

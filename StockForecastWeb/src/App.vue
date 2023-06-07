@@ -14,8 +14,15 @@
   </el-container>
 </template>
 
-<script setup lang="ts">
-import {RouterView} from 'vue-router'
+<script setup>
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  //更换主题色
+  document.body.style.setProperty('--el-color-primary', '#0A67A3');
+  document.body.style.setProperty('--el-color-primary-light-9', '#a5c3e1');
+  document.body.style.setProperty('--el-color-primary-light-3', '#65A6D1');
+})
 </script>
 
 <style scoped lang="scss">
@@ -30,14 +37,11 @@ import {RouterView} from 'vue-router'
 
   .el-header,
   .el-footer {
-    color: var(--el-text-color-primary);
     text-align: center;
   }
 
   .el-main {
-    //background-color: var(--el-color-primary-light-9);
-    color: var(--el-text-color-primary);
-    min-height: 500px;
+    height: 500px;
   }
 }
 </style>
