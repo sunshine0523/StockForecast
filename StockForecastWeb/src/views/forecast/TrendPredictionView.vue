@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <h3><i-ep-histogram class="text-icon"/>&nbsp;变化趋势</h3>
-          <el-button text @click=""><i-ep-more/>&nbsp;详细信息</el-button>
+          <el-button text @click="detailInfoDrawer = true"><i-ep-more/>&nbsp;详细信息</el-button>
         </div>
       </template>
       <div style="margin: 12px">
@@ -17,6 +17,19 @@
       </div>
     </el-card>
   </div>
+  <el-drawer
+      v-model="detailInfoDrawer"
+      title="详细预测信息"
+      direction="rtl"
+      size="33%"
+  >
+    <div style="text-align: left">
+      <el-table :data="lastDaysScoreList">
+        <el-table-column property="date" label="日期" width="150" />
+        <el-table-column property="score" label="分数" width="200" />
+      </el-table>
+    </div>
+  </el-drawer>
 </template>
 
 <script lang="ts">
@@ -26,7 +39,8 @@ export default defineComponent({
     forecastClosePrice: {},
     forecastChangedPrice: {},
     newsTypeRadio: {},
-    curPrice: {}
+    curPrice: {},
+    lastDaysScoreList: {}
   },
 })
 </script>
@@ -37,6 +51,8 @@ import {defineEmits, ref} from 'vue'
 const emit = defineEmits(['getStockDaily'])
 
 const router = useRouter()
+
+const detailInfoDrawer = ref(false)
 </script>
 <style scoped lang="sass">
 @import "@/assets/forecast.sass"

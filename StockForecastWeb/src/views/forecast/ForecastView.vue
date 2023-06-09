@@ -89,6 +89,7 @@
             :forecast-changed-price="forecastChangedPrice"
             :forecast-close-price="forecastClosePrice"
             :cur-price="selectStockCurInfo.cur_price"
+            :last-days-score-list="lastDaysScoreList"
             @getStockDaily="getStockDaily"
         />
         <DailyForecastView @getStockDaily="getStockDaily"/>
