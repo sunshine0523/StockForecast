@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from "@/views/HomeView.vue";
 import LoginView from "@/views/LoginView.vue"
 import StockNewsView from "@/views/StockNewsView.vue"
-import AnalysisView from "@/views/AnalysisView.vue";
+import AnalysisView from "@/views/analysis/AnalysisView.vue";
 import ForecastView from "@/views/forecast/ForecastView.vue";
 
 const router = createRouter({

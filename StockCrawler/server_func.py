@@ -177,6 +177,54 @@ def get_news_count(stock_code: str, news_type: int = -1):
     return res[0]['sum']
 
 
+def get_has_emotion_news_count(stock_code: str, news_type: int = -1):
+    """
+    获取含有情绪的新闻条数，供分页器使用
+    :param stock_code:
+    :param news_type:
+    :return:
+    """
+    mysql_connector = MySQLConnector(config['stock_news_crawler']['db_name'])
+    if -1 == news_type:
+        mysql_connector.execute_sql(f'''
+            select count(*) as sum from stock_news
+            where stock_code='{stock_code}' and emotion != -2 and emotion != 0
+        ''')
+    else:
+        mysql_connector.execute_sql(f'''
+            select count(*) as sum from stock_news
+            where stock_code='{stock_code}' and type = {news_type} and emotion != -2 and emotion != 0
+        ''')
+    mysql_connector.commit()
+    res = [i for i in mysql_connector.cursor.fetchall()]
+    mysql_connector.close()
+    return res[0]['sum']
+
+
+def get_has_emotion_score_news_count(stock_code: str, news_type: int = -1):
+    """
+    获取含有情绪分数的新闻条数，供分页器使用
+    :param stock_code:
+    :param news_type:
+    :return:
+    """
+    mysql_connector = MySQLConnector(config['stock_news_crawler']['db_name'])
+    if -1 == news_type:
+        mysql_connector.execute_sql(f'''
+            select count(*) as sum from stock_news
+            where stock_code='{stock_code}' and emotion_score != -999 and emotion_score != 0
+        ''')
+    else:
+        mysql_connector.execute_sql(f'''
+            select count(*) as sum from stock_news
+            where stock_code='{stock_code}' and type = {news_type} and emotion_score != -999 and emotion_score != 0
+        ''')
+    mysql_connector.commit()
+    res = [i for i in mysql_connector.cursor.fetchall()]
+    mysql_connector.close()
+    return res[0]['sum']
+
+
 def delete_stock_news(stock_code: str, from_date: str, to_date: str, news_type: int = -1):
     """
     删除日期范围内的新闻
@@ -286,6 +334,66 @@ def get_daily_news_emotion_score(stock_code: str, cur_date, last_date, news_type
     return daily_emotion_score / len(news_list) * price / 25
 
 
+def get_daily_news_emotion_score_v2(stock_code: str, cur_date, last_date, news_type: int = -1):
+    """
+    获取指定日期的新闻整体情绪分数
+    使用LLM给新闻的打分来评估分数
+    :param last_date: 上一个交易日，取这一天的股价
+    :param news_type:
+    :param stock_code:
+    :param cur_date: 本股票交易日，取这一天的新闻和前一天的新闻
+    :return:
+    """
+    mysql_connector = MySQLConnector(config['stock_news_crawler']['db_name'])
+    timestamp = int(time.mktime(time.strptime(cur_date, '%Y%m%d')))
+    start_time = timestamp - (24 + 9) * 60 * 60
+    end_time = timestamp + 15 * 60 * 60
+
+    if -1 == news_type:
+        mysql_connector.execute_sql(f'''
+            select emotion_score from stock_news
+            where stock_code='{stock_code}' and 
+            time_stamp >= {start_time} and 
+            time_stamp <= {end_time} and 
+            emotion_score != 0 and 
+            emotion_score > -998
+        ''')
+    else:
+        mysql_connector.execute_sql(f'''
+            select emotion_score from stock_news
+            where stock_code='{stock_code}' and 
+                time_stamp >= {start_time} and 
+                time_stamp <= {end_time} and 
+                emotion_score != 0 and 
+                emotion_score > -998
+                type = {news_type}
+        ''')
+    mysql_connector.commit()
+    daily_emotion_score = 0
+    news_list = mysql_connector.cursor.fetchall()
+    # 如果当天没有新闻，则不进行预测
+    if len(news_list) == 0:
+        return 0
+    for news in news_list:
+        daily_emotion_score += news['emotion_score']
+    mysql_connector.close()
+
+    # 返回的结果应该加权。首先，我们需要分数/新闻条数来得到平均分。然后，获取前一天的收盘价，规定每100价格对应单位1.
+    mongo_connector = MongoConnector(
+        config['stock_daily_crawler']['db_name'],
+        config['stock_daily_crawler']['collection_name']
+    )
+    # 获取要预测的上一个交易日的股价
+    daily_info = [i for i in mongo_connector.find_by_filter(m_filter={'ts_code': stock_code, 'trade_date': last_date}).limit(1)]
+    if len(daily_info) == 0:
+        # 如果数据库中没有股票，则不进行预测
+        return 0
+    else:
+        price = daily_info[0]['close']
+    mongo_connector.client.close()
+    return daily_emotion_score / len(news_list) * price / 100
+
+
 def get_news_emotion_list_by_page(stock_code: str, page: int, page_count: int, news_type: int = -1):
     """
     根据股票代码获取已经分析出情绪的新闻，如果新闻已经过了当天的交易时间，则属于下一个交易时间
@@ -341,10 +449,67 @@ def get_news_emotion_list_by_page(stock_code: str, page: int, page_count: int, n
     return res
 
 
-def get_last_days_daily_news_emotion_score(stock_code: str, days_count: int, news_type: int = -1):
+def get_news_emotion_list_by_page_v2(stock_code: str, page: int, page_count: int, news_type: int = -1):
+    """
+    获取股票新闻情感分数信息，按日分组
+    这个分数不是预测分数，是情感分数分析(Beta)通过语言模型分析出来的分数
+    :param page_count:
+    :param page:
+    :param news_type: -1表示查询所有来源
+    :param stock_code:
+    :return:
+    """
+    page = page - 1
+    mysql_connector = MySQLConnector(config['stock_news_crawler']['db_name'])
+    if -1 == news_type:
+        mysql_connector.execute_sql(f'''
+            select * from stock_news
+            where stock_code='{stock_code}' and emotion_score != -999 and emotion_score != 0
+            order by time_stamp desc
+            limit {page * page_count},{page_count}
+        ''')
+    else:
+        mysql_connector.execute_sql(f'''
+            select * from stock_news
+            where stock_code='{stock_code}' and 
+                emotion_score != -999 and emotion_score != 0
+                and type = {news_type}
+            order by time_stamp desc
+            limit {page * page_count},{page_count}
+        ''')
+    mysql_connector.commit()
+    res = {}
+    news_list = mysql_connector.cursor.fetchall()
+    # 获取按天的新闻总结
+    daily_news_emotion_map = get_daily_news_emotion_map(stock_code)
+    for news in news_list:
+        real_news_time = time.localtime(news['time_stamp'])
+        # 过了当前的交易时间就算作下一天
+        if real_news_time.tm_hour >= 15:
+            real_news_time = time.localtime(news['time_stamp'] + 24 * 60 * 60)
+        news_time = time.strftime('%Y-%m-%d', real_news_time)
+        if res.get(news_time) is None:
+            if daily_news_emotion_map.get(news_time) is None:
+                daily_emotion = '本日暂无总结'
+            else:
+                daily_emotion = daily_news_emotion_map[news_time]
+            res[news_time] = {'daily_emotion': daily_emotion, 'news': []}
+        res[news_time]['news'].append({
+            'id': news['id'],
+            'news_title': news['news_title'],
+            'news_link': news['news_link'],
+            'news_time': time.strftime('%Y-%m-%d %H:%M', time.localtime(news['time_stamp'])),
+            'emotion_score': news['emotion_score']
+        })
+    mysql_connector.close()
+    return res
+
+
+def get_last_days_daily_news_emotion_score(stock_code: str, days_count: int, news_type: int = -1, use_llm_score: bool = False):
     """
     经过考虑，预测使用的新闻应该为本天产生的新闻
     获取end_date前days_count天数的股票预测情况
+    :param use_llm_score: 是否使用LLM给新闻的打分（-5 ~ +5）来预测
     :param news_type: -1为获取全部新闻类型
     :param stock_code:
     :param days_count: 预测的天数
@@ -378,9 +543,13 @@ def get_last_days_daily_news_emotion_score(stock_code: str, days_count: int, new
     i = 0
     print(forcast_date_list)
     while i < days_count:
+        if use_llm_score:
+            score = get_daily_news_emotion_score_v2(stock_code, forcast_date_list[i], forcast_date_list[i + 1], news_type)
+        else:
+            score = get_daily_news_emotion_score(stock_code, forcast_date_list[i], forcast_date_list[i + 1], news_type)
         res.append({
             'date': forcast_date_list[i],
-            'score': get_daily_news_emotion_score(stock_code, forcast_date_list[i], forcast_date_list[i + 1], news_type)
+            'score': score
         })
         i += 1
     # 倒置，从前往后排

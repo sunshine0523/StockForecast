@@ -79,6 +79,28 @@ def get_news_count(stock_code: str, news_type: int = -1):
     return {'data': server_func.get_news_count(stock_code, news_type)}
 
 
+@app.get('/getHasEmotionNewsCount')
+def get_has_emotion_news_count(stock_code: str, news_type: int = -1):
+    """
+    获取含有情绪的新闻条数，供分页器使用
+    :param stock_code:
+    :param news_type:
+    :return:
+    """
+    return {'data': server_func.get_has_emotion_news_count(stock_code, news_type)}
+
+
+@app.get('/getHasEmotionScoreNewsCount')
+def get_has_emotion_score_news_count(stock_code: str, news_type: int = -1):
+    """
+    获取含有情绪分数的新闻条数，供分页器使用
+    :param stock_code:
+    :param news_type:
+    :return:
+    """
+    return {'data': server_func.get_has_emotion_score_news_count(stock_code, news_type)}
+
+
 @app.post('/deleteStockNews')
 def delete_stock_news(
         stock_code: str = Body(),
@@ -122,7 +144,7 @@ def refresh_stock_news(stock_code: str, page_count: int = 10, news_type: int = 1
 @app.get('/getStockNewsEmotionListByPage')
 def get_stock_news_emotion_list_by_page(stock_code: str, page: int, page_count: int, news_type: int = -1):
     """
-    获取近10日的股票新闻情感信息，按日分组
+    获取股票新闻情感信息，按日分组
     :param page_count:
     :param page:
     :param news_type: -1表示查询所有来源
@@ -130,6 +152,20 @@ def get_stock_news_emotion_list_by_page(stock_code: str, page: int, page_count: 
     :return:
     """
     return {'data': server_func.get_news_emotion_list_by_page(stock_code, page, page_count, news_type)}
+
+
+@app.get('/getStockNewsEmotionListByPageV2')
+def get_stock_news_emotion_list_by_page_v2(stock_code: str, page: int, page_count: int, news_type: int = -1):
+    """
+    获取股票新闻情感分数信息，按日分组
+    这个分数不是预测分数，是情感分数分析(Beta)通过语言模型分析出来的分数
+    :param page_count:
+    :param page:
+    :param news_type: -1表示查询所有来源
+    :param stock_code:
+    :return:
+    """
+    return {'data': server_func.get_news_emotion_list_by_page_v2(stock_code, page, page_count, news_type)}
 
 
 @app.get('/getDailyNewsEmotionScore')
@@ -144,7 +180,7 @@ def get_stock_news_emotion(stock_code: str, news_date: str):
 
 
 @app.get('/getLastDaysDailyNewsEmotionScoreList')
-def get_stock_news_emotion_list(stock_code: str, days_count: int, news_type: int = -1):
+def get_stock_news_emotion_score_list(stock_code: str, days_count: int, news_type: int = -1):
     """
     获取end_date前days_count天数的股票预测情况
     :param news_type: -1为获取全部类型
@@ -153,6 +189,19 @@ def get_stock_news_emotion_list(stock_code: str, days_count: int, news_type: int
     :return:
     """
     return {'data': server_func.get_last_days_daily_news_emotion_score(stock_code, days_count, news_type)}
+
+
+@app.get('/getLastDaysDailyNewsEmotionScoreListV2')
+def get_stock_news_emotion_score_list_v2(stock_code: str, days_count: int, news_type: int = -1):
+    """
+    获取end_date前days_count天数的股票预测情况
+    使用语言模型给出的分数预测
+    :param news_type: -1为获取全部类型
+    :param stock_code:
+    :param days_count: 预测的天数
+    :return:
+    """
+    return {'data': server_func.get_last_days_daily_news_emotion_score(stock_code, days_count, news_type, True)}
 
 
 @app.post('/updateNewsEmotion')

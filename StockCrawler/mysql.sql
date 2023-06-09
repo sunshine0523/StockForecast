@@ -10,6 +10,8 @@ create table stock_news (
     news_content VARCHAR(5000),
     news_link VARCHAR(200),
     emotion INTEGER NOT NULL DEFAULT -2,
+    # 情绪分数用于情感分数分析(Beta)功能，-999表示该新闻还未分析，-998表示该新闻分析失败 -5~+5表示情绪打分，-5情绪最负面，+5情绪最正面
+    emotion_score INTEGER NOT NULL DEFAULT -999,
     type INTEGER NOT NULL DEFAULT 0
 );
 

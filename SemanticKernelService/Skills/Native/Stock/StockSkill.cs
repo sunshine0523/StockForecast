@@ -30,12 +30,18 @@ public class StockSkill
     private readonly ISKFunction _newsListEmotionAnalysisFunction;
 
     /// <summary>
+    /// 给定一个新闻列表，分析它们的情绪分数(-5~5)，返回它们的情绪分数列表
+    /// </summary>
+    private readonly ISKFunction _newsListEmotionScoreAnalysisFunction;
+
+    /// <summary>
     /// 给定一个新闻列表，总结其整体的情绪
     /// </summary>
     private readonly ISKFunction _summarizeNewsEmotionFunction;
-
-    private const int TenDays = 10 * 24 * 60 * 60;
+    
+    private const int TwoDays = 2 * 24 * 60 * 60;
     private const int NewsListMaxToken = 500;
+    private const int NewsListForScoreMaxToken = 600;
     private const int SummarizeNewsMaxToken = 2000;
 
     public StockSkill(IKernel kernel, StockDbSkill stockDbSkill, ILogger? logger)
@@ -56,6 +62,14 @@ public class StockSkill
             skillName: nameof(StockSkill),
             description: "Give news list, result their emotion list",
             maxTokens: NewsListMaxToken,
+            temperature: 0.1,
+            topP: 0.5
+        );
+        _newsListEmotionScoreAnalysisFunction = kernel.CreateSemanticFunction(
+            StockSkillDefinition.NewsListEmotionScoreAnalysisDefinition,
+            skillName: nameof(StockSkill),
+            description: "Give news list, result their emotion score list",
+            maxTokens: NewsListForScoreMaxToken,
             temperature: 0.1,
             topP: 0.5
         );
@@ -94,9 +108,9 @@ public class StockSkill
             //注意第三个条件成立需要保证新闻列表按照时间顺序倒序排列
             if (builder.Length > NewsListMaxToken - 100 ||
                 i >= stockNewsList.Count - 1 ||
-                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays)
+                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TwoDays)
 
-        {
+            {
                 //如果当前的新闻列表为空，那么继续
                 if (builder.Length == 0) continue;
                 
@@ -132,7 +146,7 @@ public class StockSkill
                 builder.Clear();
                 stockNewsAnalysisItemList.Clear();
 
-                if (DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TenDays) break;
+                if (DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TwoDays) break;
 
                 Thread.Sleep(500);
             }
@@ -140,6 +154,90 @@ public class StockSkill
             {
                 stockNewsAnalysisItemList.Add(stockNewsList[i]);
                 builder.Append("###NEWS###:").Append(stockNewsList[i].NewsTitle.ReplaceSpecialSymbol()).Append(" ###NEWS END###\n");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 给定股票代码，在数据库中查找对应的新闻，通过大模型分析对其情感打分，正向1，负向-1，无情感0。将结果存储到数据库中
+    /// </summary>
+    /// <param name="stockCode">股票代码</param>
+    /// <param name="context"></param>
+    [SKFunction("Analyzing the Emotion Score of News on Designated Stocks")]
+    [SKFunctionName("AnalysisStockNewsEmotionScore")]
+    [SKFunctionInput(Description = "The code of the stock to be analyzed")]
+    public async Task AnalysisStockNewsEmotionScore(string stockCode, SKContext context)
+    {
+        var stockNewsList = _stockDbSkill.GetStockNewsList(stockCode, context);
+
+        var builder = new StringBuilder();
+        
+        var stockNewsAnalysisItemList = new List<StockNews>();
+
+        for (var i = 0; i < stockNewsList.Count; ++i)
+        {
+            //新闻已经分析过则不再分析，标题过短的也不进行分析
+            // -999 未分析 -998 分析但结果异常
+            if (stockNewsList[i].EmotionScore >= -998 || stockNewsList[i].NewsTitle.Length <= 5) continue;
+
+            //token已经满或者已经到达最后一个新闻或者时间已经到达设定时间就向语言模型进行一次请求
+            //注意第三个条件成立需要保证新闻列表按照时间顺序倒序排列
+            if (builder.Length > NewsListMaxToken - 200 ||
+                i >= stockNewsList.Count - 1 ||
+                DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TwoDays)
+
+            {
+                //如果当前的新闻列表为空，那么继续
+                if (builder.Length == 0) continue;
+                
+                //如果因为token到了而去请求，则需要-1
+                if (builder.Length > NewsListMaxToken - 200 && i > 0) --i;
+                builder.Remove(builder.Length - 1, 1);
+                
+                //请求语言模型
+                _logger.LogError($"执行中 {builder}");
+                var result = await _kernel.RunAsync(builder.ToString(), _newsListEmotionScoreAnalysisFunction);
+                _logger.LogError($"执行完毕 {result.Result}");
+                if (result.ErrorOccurred)
+                {
+                    _logger.LogError($"AnalysisStockNews Error {result.LastErrorDescription}");
+                    throw new Exception($"AnalysisStockNews Error {result.LastErrorDescription}");
+                }
+                
+                //分析语言模型返回的结果
+                var emotionList = GetEmotionList(result.Result);
+                _logger.LogError($"emotion {emotionList.Count} news {stockNewsAnalysisItemList.Count}");
+
+                //如果两者长度不一致，则不要添加到数据库中
+                if (emotionList.Count == stockNewsAnalysisItemList.Count)
+                {
+                    for (var j = 0; j < stockNewsAnalysisItemList.Count; ++j)
+                    {
+                        stockNewsAnalysisItemList[j].EmotionScore = emotionList[j];
+                    }
+                    //存储到数据库中
+                    _stockDbSkill.UpdateStockNewsList(stockNewsAnalysisItemList, context);
+                }
+                else
+                {
+                    //如果不一致则加入报错代码
+                    foreach (var stockNews in stockNewsAnalysisItemList)
+                    {
+                        stockNews.EmotionScore = -998;
+                    }
+                }
+
+                builder.Clear();
+                stockNewsAnalysisItemList.Clear();
+
+                if (DateTime.Now.ToLocalTime().GetTimeStamp() - stockNewsList[i].TimeStamp > TwoDays) break;
+
+                Thread.Sleep(500);
+            }
+            else
+            {
+                stockNewsAnalysisItemList.Add(stockNewsList[i]);
+                builder.Append("##NEWS##:").Append(stockNewsList[i].NewsTitle.ReplaceSpecialSymbol()).Append(" ##NEWS END##\n");
             }
         }
     }

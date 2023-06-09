@@ -3,7 +3,8 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <h3>变化趋势</h3>
+          <h3><i-ep-histogram class="text-icon"/>&nbsp;变化趋势</h3>
+          <el-button text @click=""><i-ep-more/>&nbsp;详细信息</el-button>
         </div>
       </template>
       <div style="margin: 12px">
@@ -37,19 +38,6 @@ const emit = defineEmits(['getStockDaily'])
 
 const router = useRouter()
 </script>
-<style scoped>
-.chart-div {
-  margin-left: 5%;
-  margin-right: 5%;
-  margin-top: 20px;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #0A67A3;
-}
-.el-card {
-  border-radius: 16px;
-}
+<style scoped lang="sass">
+@import "@/assets/forecast.sass"
 </style>

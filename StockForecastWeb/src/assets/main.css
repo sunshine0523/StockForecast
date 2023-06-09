@@ -23,6 +23,11 @@ a,
   z-index: -1
 }
 
+.text-icon {
+  position: relative;
+  top: 4px
+}
+
 .glass-water-bg {
   background-image: linear-gradient(to top, #dfe9f3 0%, white 100%);
 }
@@ -46,4 +51,7 @@ a,
 }
 .bg3 {
   background-image: radial-gradient(circle, #ffffff, #fbfcff, #f4f9ff, #ebf7ff, #e1f5fe);
+}
+.bg4{
+  background-image: radial-gradient(circle, #eaeeff, #f0f2ff, #f6f6ff, #fbfaff, #ffffff);
 }

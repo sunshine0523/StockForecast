@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <h3>分时信息</h3>
+          <h3><i-ep-camera-filled class="text-icon"/>&nbsp;分时信息</h3>
           <el-button
               text
               :loading="getStockMinuteLoading"
@@ -36,19 +36,6 @@ const getStockMinute = ()=>{
 }
 </script>
 
-<style scoped>
-.chart-div {
-  margin-left: 5%;
-  margin-right: 5%;
-  margin-top: 20px;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #0A67A3;
-}
-.el-card {
-  border-radius: 16px;
-}
+<style scoped lang="sass">
+@import "@/assets/forecast.sass"
 </style>

@@ -95,7 +95,6 @@ function getForecastForMinute(stockMinuteList, forecastClosePrice) {
 const splitTrendPredictionData = (lastDaysScoreList, stockDailyList) => {
     const forecastRawData = lastDaysScoreList.value
     const dailyRawData = stockDailyList.value
-    console.log(dailyRawData)
 
     let times = []
     let forecast_values = []
@@ -206,8 +205,9 @@ export const updateTrendPredictionEcharts = (trendPredictionChart, lastDaysScore
                 type: 'line',
                 data: data.forecast_values,
                 lineStyle: {
-                    opacity: 1
-                }
+                    opacity: 1,
+                    type: 'dotted'
+                },
             },
             {
                 name: '实际趋势',

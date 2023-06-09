@@ -25,9 +25,9 @@
     <el-row style="margin-top: 20px">
       <el-col :span="4">
         <el-affix :offset="240">
-          <el-card class="cloudy-knoxville-bg">
+          <el-card class="recent-card">
             <template #header>
-              <h3 style="text-align: center; color: red">猜你喜欢</h3>
+              <h3 style="text-align: center"><i-ep-clock class="text-icon"/>&nbsp;最近访问</h3>
             </template>
             <div v-for="stock in favoriteStockList" style="margin-top: 5px">
               <el-link @click="selectStock=stock.stock_code;onSelectStock()" style="color: #282828">{{stock.stock_code}} {{stock.name}}</el-link>
@@ -127,7 +127,7 @@
       <el-col :span="4">
         <el-card class="premium-white-bg" style="margin-top: 32px">
           <template #header>
-            <h3 style="text-align: center">股票信息</h3>
+            <h3 style="text-align: center"><i-ep-info-filled class="text-icon"/>&nbsp;股票信息</h3>
           </template>
           <div style="text-align: start">
             <p><span style="font-weight: bold">名称：</span>{{selectStockInfo.name}}</p>
@@ -376,5 +376,8 @@ const toDeleteNews = () => {
 }
 .el-card {
   border-radius: 16px;
+}
+.recent-card /deep/ .el-card__header {
+  background-image: linear-gradient(to top, #ffffff, #fbf8fd, #fbeff8, #fde7f0, #ffdee4);
 }
 </style>

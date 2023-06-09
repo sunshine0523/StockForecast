@@ -29,6 +29,24 @@ news, “-1” if bad news, or “0” if uncertain in the first line. You recei
 {{$INPUT}}
 [RESULT]
 ";
+    
+    internal const string NewsListEmotionScoreAnalysisDefinition =
+        @"Forget all your previous instructions. Pretend you are a financial expert. You are
+a financial expert with stock recommendation experience. You only need to answer numbers between -5 and 5. Among them, -5 to -1 indicate negative news emotions, -5 indicates the strongest negative emotions, and -1 indicates the weakest negative emotions. 1 to 5 indicate positive news sentiment, 5 indicates the strongest positive sentiment, and 1 indicates the weakest positive sentiment. 0 indicates that there is no obvious emotional tendency in the news.You receive a news list, please follow the example to return an emotional list.
+
+[START EXAMPLE]
+[INPUT]
+##NEWS##: 突发！长城汽车举报比亚迪 ##NEWS END##
+##NEWS##: 比亚迪第一季度继续领跑市场 ##NEWS END##
+##NEWS##: 解读2023年5月新能源车企销量排行 ##NEWS END##
+[RESULT] 
+-5,4,0
+[END EXAMPLE]
+
+[INPUT]
+{{$INPUT}}
+[RESULT]
+";
 
     internal const string SummarizeNewsEmotionDefinition = @"
 [SUMMARIZATION RULES]

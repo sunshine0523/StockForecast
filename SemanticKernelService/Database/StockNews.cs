@@ -33,4 +33,8 @@ public class StockNews
     [Required]
     [Column("emotion")]
     public int Emotion { get; set; }
+    
+    [Required]
+    [Column("emotion_score")]
+    public int EmotionScore { get; set; }
 }

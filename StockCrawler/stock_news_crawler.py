@@ -92,7 +92,7 @@ def crawl_guba(
 
     # 对于股吧，接受的股票代码格式如：000001，需要预处理
     guba_stock_code = ''.join(stock_code.split('.')[0])
-    base_url = f'http://guba.eastmoney.com/o/list,{guba_stock_code}_'
+    base_url = f'http://guba.eastmoney.com/o/list,{guba_stock_code}'
 
     # 获取数据库中新闻时间最新一条数据，用以比对时间
     mysql_connector.execute_sql(f'''
@@ -111,7 +111,7 @@ def crawl_guba(
     for page in range(page_count):
         print(f'爬取第{page}页')
         try:
-            res = requests.get(f'{base_url}{page + 1}.html')
+            res = requests.get(f'{base_url},f_{page + 1}.html')
             soup = BeautifulSoup(res.text, 'html.parser')
             for news in soup.find_all('div', attrs={'class': 'articleh'}):
                 try:
