@@ -101,23 +101,6 @@ const onTabChanged = () => {
 
 </script>
 
-<style scoped>
-.title {
-  text-align: center;
-  font-size: x-large;
-  color: white;
-  font-weight: bold;
-}
-.content {
-  text-align: center;
-  min-height: 400px;
-}
-.stock-select {
-  margin-top: 16px;
-  width: 75%;
-}
-.analysis-button {
-  margin-top: 16px;
-  margin-left: 12px;
-}
+<style scoped lang="sass">
+@import "@/assets/base-view.sass"
 </style>

@@ -191,7 +191,7 @@ const favoriteStockList = ref([])
 const selectStockInfo = ref({})
 let trendPredictionChart, minuteChart, dailyChart
 
-const forecastDaysCount = ref(5)
+const forecastDaysCount = ref(3)
 const forecastDataSourceValue = ref(1)
 //新闻来源
 const newsTypeRadio = ref('-1')
@@ -332,35 +332,22 @@ const getStockCurInfo = () => {
 }
 </script>
 
-<style scoped>
-.title {
-  text-align: center;
-  font-size: x-large;
-  color: white;
-  font-weight: bold;
-}
-.content {
-  text-align: center;
-  min-height: 400px;
-}
-.stock-select {
-  margin-top: 16px;
-  width: 80%;
-}
-.tip-card {
-  margin-top: 75px;
-  text-align: start;
-}
-.el-card {
-  border-radius: 16px;
-}
-.forecast-option {
-  margin-top: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.recent-card /deep/ .el-card__header {
-  background-image: linear-gradient(to top, #ffffff, #fbf8fd, #fbeff8, #fde7f0, #ffdee4);
-}
+<style scoped lang="sass">
+@import "@/assets/base-view.sass"
+.tip-card
+  margin-top: 75px
+  text-align: start
+
+.el-card
+  border-radius: 16px
+
+.forecast-option
+  margin-top: 16px
+  display: flex
+  justify-content: space-between
+  align-items: center
+
+.recent-card ::v-deep .el-card__header
+  background-image: linear-gradient(to top, #ffffff, #fbf8fd, #fbeff8, #fde7f0, #ffdee4)
+
 </style>

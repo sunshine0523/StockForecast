@@ -4,6 +4,7 @@
       <template #header>
         <div class="card-header">
           <h3><i-ep-histogram class="text-icon"/>&nbsp;变化趋势</h3>
+          <el-button text></el-button>
           <el-button text @click="detailInfoDrawer = true"><i-ep-more/>&nbsp;详细信息</el-button>
         </div>
       </template>

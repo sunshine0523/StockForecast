@@ -17,12 +17,15 @@ services:
         max_attempts: 3
 
   mongo-express:
+    depends_on:
+      - mongo
     image: mongo-express
     links:
       - mongo
     ports:
       - "8081:8081"
 
+  # 创建好MySQL后，需要在服务中执行StcokCrawler/mysql.sql脚本以创建数据库
   mysql:
     image: mysql:latest
     ports:
@@ -38,3 +41,29 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
+
+  sk-service:
+    depends_on:
+      - mongo
+      - mysql
+    build: ./SemanticKernelService
+    ports:
+      - "5095:5095"
+
+  crawler-service:
+    depends_on:
+      - mongo
+      - mysql
+    build: ./StockCrawler
+    ports:
+      - "8000:8000"
+
+  web:
+    depends_on:
+      - mongo
+      - mysql
+      - sk-service
+      - crawler-service
+    build: ./StockForecastWeb
+    ports:
+      - "8080:8080"

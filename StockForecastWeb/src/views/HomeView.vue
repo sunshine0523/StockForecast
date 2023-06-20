@@ -16,10 +16,14 @@
 
 <script setup lang="ts">
 import {onMounted, ref} from 'vue'
+import img1 from '@/assets/img/01.png'
+import img2 from '@/assets/img/02.png'
+import img3 from '@/assets/img/03.png'
+
 const imageList = [
-    '01.png',
-    '02.png',
-    '03.png'
+    img1,
+    img2,
+    img3
 ]
 
 const index = ref(0)

@@ -3,7 +3,7 @@
   <el-row>
     <el-col :span="16">
       <div class="login-img-div">
-        <el-image src="login.svg" fit="fill" />
+        <el-image :src="loginImg" fit="fill" />
       </div>
     </el-col>
     <el-col :span="8">
@@ -50,6 +50,7 @@ import axios from "axios";
 import baseUrls from "@/config/baseUrlConfig";
 import {ElMessage} from "element-plus";
 import { useRouter } from 'vue-router'
+import loginImg from '@/assets/img/login.svg'
 
 const router = useRouter()
 
@@ -79,30 +80,39 @@ const toLogin = () => {
 }
 </script>
 
-<style scoped>
-.login-title {
-  text-align: center;
-  margin: 6px 0;
-}
-.login-button {
-  width: 100%;
-  margin: 6px 0;
-}
-.login-img-div {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 70%;
-  height: 70%;
-  margin: 5% 15% 0 15%;
-}
-.login-header-div {
-  position: absolute;
-  background-image: linear-gradient(to top, #ffffff, #c9cad7, #9299b2, #576b8d, #03426a);
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 200px;
+<style scoped lang="sass">
+.login-title
+  text-align: center
+  margin: 6px 0
+  font-weight: bold
+
+.login-button
+  width: 100%
+  margin: 6px 0
+
+.login-img-div
+  display: flex
+  justify-content: space-between
+  align-items: center
+  width: 70%
+  height: 70%
+  margin: 5% 15% 0 15%
+
+.login-header-div
+  position: absolute
+  background-image: linear-gradient(to top, #ffffff, #c9cad7, #9299b2, #576b8d, #03426a)
+  left: 0
+  top: 0
+  width: 100%
+  height: 200px
   z-index: -1
-}
+
+.el-card
+  border-radius: 16px
+
+::v-deep .el-input__wrapper
+  border-radius: 32px
+
+.el-button
+  border-radius: 32px
 </style>

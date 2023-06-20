@@ -125,7 +125,7 @@
       </el-col>
       <el-col :span="1"/>
       <el-col :span="4">
-        <el-card class="premium-white-bg" style="margin-top: 32px">
+        <el-card class="premium-white-bg" style="margin-top: 32px" v-if="selectStockInfo.name !== undefined">
           <template #header>
             <h3 style="text-align: center"><i-ep-info-filled class="text-icon"/>&nbsp;股票信息</h3>
           </template>
@@ -350,34 +350,21 @@ const toDeleteNews = () => {
 
 </script>
 
-<style scoped>
-.title {
-  text-align: center;
-  font-size: x-large;
-  color: white;
-  font-weight: bold;
-}
-.content {
-  text-align: center;
-  min-height: 400px;
-}
-.stock-select {
-  margin-top: 16px;
-  width: 75%;
-}
-.time-line {
-  text-align: start;
-}
-.crawler-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.el-card {
-  border-radius: 16px;
-}
-.recent-card /deep/ .el-card__header {
-  background-image: linear-gradient(to top, #ffffff, #fbf8fd, #fbeff8, #fde7f0, #ffdee4);
-}
+<style scoped lang="sass">
+@import "@/assets/base-view.sass"
+.time-line
+  text-align: start
+
+.crawler-option
+  display: flex
+  justify-content: space-between
+  align-items: center
+  margin-bottom: 12px
+
+.el-card
+  border-radius: 16px
+
+.recent-card ::v-deep .el-card__header
+  background-image: linear-gradient(to top, #ffffff, #fbf8fd, #fbeff8, #fde7f0, #ffdee4)
+
 </style>

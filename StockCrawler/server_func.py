@@ -365,7 +365,7 @@ def get_daily_news_emotion_score_v2(stock_code: str, cur_date, last_date, news_t
                 time_stamp >= {start_time} and 
                 time_stamp <= {end_time} and 
                 emotion_score != 0 and 
-                emotion_score > -998
+                emotion_score > -998 and
                 type = {news_type}
         ''')
     mysql_connector.commit()
@@ -391,7 +391,7 @@ def get_daily_news_emotion_score_v2(stock_code: str, cur_date, last_date, news_t
     else:
         price = daily_info[0]['close']
     mongo_connector.client.close()
-    return daily_emotion_score / len(news_list) * price / 100
+    return daily_emotion_score / len(news_list) * price / 300
 
 
 def get_news_emotion_list_by_page(stock_code: str, page: int, page_count: int, news_type: int = -1):

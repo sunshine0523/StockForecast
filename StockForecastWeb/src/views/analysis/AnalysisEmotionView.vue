@@ -258,4 +258,5 @@ defineExpose({toAnalysis, getStockNewsCount})
 
 <style scoped lang="sass">
 @import "@/assets/analysis.sass"
+@import "@/assets/base-view.sass"
 </style>
